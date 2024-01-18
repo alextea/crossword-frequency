@@ -1,9 +1,27 @@
 import requests
 from bs4 import BeautifulSoup
 import json
-import sqlite3
+from datetime import datetime
+from sqlalchemy import create_engine, Column, Integer, String, DateTime  # Change Date to DateTime
+from sqlalchemy.orm import declarative_base, Session
 
-def scrape_and_save_to_database(url, database_name="crossword_database.db"):
+Base = declarative_base()
+
+class CrosswordEntry(Base):
+    __tablename__ = 'crossword_entries'
+
+    id = Column(Integer, primary_key=True)
+    crossword_id = Column(String)
+    clue_number = Column(Integer)
+    clue_direction = Column(String)
+    clue_text = Column(String)
+    solution = Column(String)
+    date_published = Column(DateTime)  # Change to DateTime
+
+    def __repr__(self):
+        return f"<CrosswordEntry(id={self.id}, crossword_id={self.crossword_id}, clue_number={self.clue_number}, clue_direction={self.clue_direction}, clue_text={self.clue_text}, solution={self.solution}, date_published={self.date_published})>"
+
+def scrape_and_save_to_database(url, database_url="sqlite:///crossword_database.db"):
     # Send a GET request to the URL
     response = requests.get(url)
     
@@ -11,56 +29,42 @@ def scrape_and_save_to_database(url, database_name="crossword_database.db"):
     if response.status_code == 200:
         # Parse the HTML content of the page using BeautifulSoup
         soup = BeautifulSoup(response.text, 'html.parser')
-        
+
         # Find the div with the class 'js-crossword' and get the 'data-crossword-data' attribute
         crossword_div = soup.find('div', class_='js-crossword')
         if crossword_div:
             crossword_data_json = crossword_div.get('data-crossword-data')
-            
-            # Parse the JSON data
-            try:
-                crossword_data = json.loads(crossword_data_json)
+
+            # Load the JSON data
+            crossword_data = json.loads(crossword_data_json)
+
+            # Convert timestamp to Python datetime object
+            timestamp = crossword_data['date']
+            date_published = datetime.utcfromtimestamp(timestamp / 1000)  # Convert milliseconds to seconds
+
+            # Create the SQLAlchemy engine and bind it to the session
+            engine = create_engine(database_url)
+            Base.metadata.create_all(engine)
+            session = Session(engine)
+
+            # Insert crossword entries into the database
+            for entry_data in crossword_data['entries']:
+                entry = CrosswordEntry(
+                    crossword_id=crossword_data['id'],
+                    clue_number=entry_data['number'],
+                    clue_direction=entry_data['direction'],
+                    clue_text=entry_data['clue'],
+                    solution=entry_data['solution'],
+                    date_published=date_published
+                )
+                session.add(entry)
+
+            # Commit changes and close the session
+            session.commit()
+            session.close()
+
+            print("Data saved to the database successfully.")
                 
-                # Connect to the SQLite database
-                connection = sqlite3.connect(database_name)
-                cursor = connection.cursor()
-
-                # Create a table if it doesn't exist
-                cursor.execute('''
-                    CREATE TABLE IF NOT EXISTS crossword_entries (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        crossword_id TEXT,
-                        clue_number INTEGER,
-                        clue_direction TEXT,
-                        clue_text TEXT,
-                        solution TEXT,
-                        date_published INTEGER
-                    )
-                ''')
-
-                # Insert crossword entries into the database
-                for entry in crossword_data['entries']:
-                    cursor.execute('''
-                        INSERT OR REPLACE INTO crossword_entries 
-                        (crossword_id, clue_number, clue_direction, clue_text, solution, date_published)
-                        VALUES (?, ?, ?, ?, ?, ?)
-                    ''', (
-                        crossword_data['id'],
-                        entry['number'],
-                        entry['direction'],
-                        entry['clue'],
-                        entry['solution'],
-                        crossword_data['date'],
-                    ))
-
-                # Commit changes and close the connection
-                connection.commit()
-                connection.close()
-
-                print("Data saved to the database successfully.")
-                
-            except json.JSONDecodeError as e:
-                print(f"Error decoding JSON: {e}")
         else:
             print("Crossword div not found")
     else:
