@@ -37,7 +37,7 @@ def scrape_crossword_data(url, database_url="sqlite:///crossword_database.db"):
                     solution=entry_data['solution'],
                 )
 
-                print("Solution: " + entry.solution)
+                print(f"Solution: {entry.solution}")
 
                 clues_list.append(entry)
             

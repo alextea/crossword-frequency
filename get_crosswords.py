@@ -4,13 +4,13 @@ from time import sleep
 import urllib.parse
 import configparser
 
-from database.database_operations import init_db
+import database.database_operations as db
 from database.models import Crossword, Clue
 
 from scraper import scrape_crossword_data
 
 # Initialize the database session
-db_session = init_db("sqlite:///crossword_database.db")
+db_session = db.init_db("sqlite:///crossword_database.db")
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -18,7 +18,7 @@ config.read('config.ini')
 API_KEY = config['api_keys']['guardian']
 API_URL = "https://content.guardianapis.com/crosswords/series/quick"
 
-from_date = date(2024, 1, 18)
+from_date = date(2019, 1, 1)
 to_date = date.today()
 
 def get_crosswords(api_key, from_date, to_date, page=1):
@@ -43,16 +43,19 @@ def get_crosswords(api_key, from_date, to_date, page=1):
         print(f"Failed to retrieve crossword data for {formatted_from_date} (Status Code: {response.status_code})")
 
 def process_crosswords(crossword_data):
-    # Implement logic to process and save crossword data as needed
-    # You can adapt the previous code to save crossword data to the database
-    # print(json.dumps(crossword_data, indent=2))
+    # iterate through crossword page urls and scrape crossword data from pages
 
     for result in crossword_data['results']:
+        # check if crossword has already been scraped
+        if db.record_exists(db_session, Crossword, result['id']):
+            print(f"Skipping record ID {result['id']} because it already exists.")
+            continue
+
         # Convert timestamp to Python datetime object
         timestamp = result['webPublicationDate']
         date_published = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%SZ")
 
-        # Insert crosswords into the database
+        # create crossword object
         crossword = Crossword(
           id = result['id'],
           web_title = result['webTitle'],
@@ -60,7 +63,7 @@ def process_crosswords(crossword_data):
           date_published = date_published
         )
 
-        print("Crossword ID: " + crossword.id)
+        print(f"Crossword ID: {crossword.id}")
 
         # now scrape clues from webpage
         clues_list = scrape_crossword_data(result['webUrl'])
