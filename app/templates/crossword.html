@@ -1,0 +1,22 @@
+<!-- app/templates/view.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crossword - {{ crossword.web_title }}</title>
+</head>
+<body>
+    <h1>{{ crossword.web_title }}</h1>
+
+    <p>Published: {{ crossword.date_published }}</p>
+    <p><a href="{{ crossword.web_url }}">Link to crossword on Guardian website</a></p>
+
+    <p>Solutions in this Crossword:</p>
+    <ul>
+      {% for clue in clues %}
+        <li><a href="{{ url_for('view', solution=clue.solution) }}">{{ clue.solution }}</a></li>
+      {% endfor %}
+    </ul>
+</body>
+</html>

@@ -1,7 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
 import json
-from datetime import datetime
 
 from database.database_operations import init_db
 from database.models import Crossword, Clue

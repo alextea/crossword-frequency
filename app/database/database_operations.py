@@ -2,11 +2,11 @@
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from .models import Base
+from .models import db
 
 def init_db(db_url):
     engine = create_engine(db_url)
-    Base.metadata.create_all(engine)
+    db.metadata.create_all(engine)
     return sessionmaker(bind=engine)()
 
 def record_exists(session, Model, record_id):

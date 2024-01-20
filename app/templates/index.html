@@ -1,0 +1,28 @@
+<!-- app/templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clues Index</title>
+</head>
+<body>
+    <h1>Clues Index</h1>
+
+    <p>Latest crossword: <a href="{{ url_for('crossword', crossword_id=latest_crossword.id | replace("/", "%2F"))}}">{{ latest_crossword.web_title }}</a> — {{ latest_crossword.date_published }}</p>
+
+    <p>Solutions in latest crossword:</p>
+    <ul>
+        {% for clue in clues %}
+          <li><a href="{{ url_for('view', solution=clue.solution) }}">{{ clue.solution }}</a></li>
+        {% endfor %}
+    </ul>
+
+    <p>Most common solutions:</p>
+    <ul>
+      {% for clue in most_common_clues %}
+        <li><a href="{{ url_for('view', solution=clue.solution) }}">{{ clue.solution }}</a></li>
+      {% endfor %}
+    </ul>
+</body>
+</html>
