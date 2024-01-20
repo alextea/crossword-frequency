@@ -16,7 +16,20 @@ def index():
       .all()
     )
 
-    return render_template('index.html', clues=clues, latest_crossword = latest_crossword, most_common_clues = most_common_clues)
+    total_clues = Clue.query.count()
+    total_across = Clue.query.filter_by(clue_direction = 'across').count()
+    total_down = Clue.query.filter_by(clue_direction = 'down').count()
+    total_crosswords = Crossword.query.count()
+
+    return render_template('index.html',
+                           clues=clues,
+                           latest_crossword = latest_crossword,
+                           most_common_clues = most_common_clues,
+                           total_clues = total_clues,
+                           total_across = total_across,
+                           total_down = total_down,
+                           total_crosswords = total_crosswords
+                           )
 
 @app.route('/solution/<solution>')
 def view(solution):
@@ -30,7 +43,15 @@ def view(solution):
         .all()
     )
 
-    return render_template('view.html', clue = clue, clues_and_crosswords = clues_and_crosswords)
+    across_count = Clue.query.filter_by(solution=solution, clue_direction='across').count()
+    down_count = Clue.query.filter_by(solution=solution, clue_direction='down').count()
+
+    return render_template('view.html', 
+                           clue = clue,
+                           clues_and_crosswords = clues_and_crosswords,
+                           across_count = across_count,
+                           down_count = down_count
+                           )
 
 @app.route('/crossword/<crossword_id>')
 def crossword(crossword_id):

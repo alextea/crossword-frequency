@@ -4,10 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clues Index</title>
+    <title>Guardian Quick Crossword clue stats</title>
 </head>
 <body>
-    <h1>Clues Index</h1>
+    <h1>Guardian Quick Crossword clue stats</h1>
+
+    <p>Have you ever thought you've seen that word in a crossword before? Now you can find out!</p>
 
     <form action="/find-word" method="post">
       <label for="solution-input">Find a word</label>
@@ -30,5 +32,24 @@
         <li><a href="{{ url_for('view', solution=clue.solution) }}">{{ clue.solution }}</a></li>
       {% endfor %}
     </ul>
+
+    <p>Crossword stats:</p>
+
+    <dl>
+      <dt>Number of crosswords:</dt>
+      <dd>{{ total_crosswords }}</dd>
+
+      <dt>Number of clues:</dt>
+      <dd>{{ total_clues }}</dd>
+
+      <dt>Number of across clues:</dt>
+      <dd>{{ total_across }}</dd>
+
+      <dt>Number of down clues:</dt>
+      <dd>{{ total_down }}</dd>
+
+      <dt>Average clue:crossword ratio:</dt>
+      <dd>{{ (total_clues / total_crosswords) | round(2) }}</dd>
+    </dl>
 </body>
 </html>

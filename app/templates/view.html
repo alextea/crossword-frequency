@@ -11,13 +11,13 @@
 
     <p>{{ clue.clue_text }}</p>
 
-    <p>Solution has appeared in {{ clues_and_crosswords|length }} crosswords:</p>
+    <p>Solution has appeared in {{ clues_and_crosswords|length }} crosswords ({{ across_count }} across and {{ down_count }} down):</p>
 
     <ul>
       {% for clue, crossword in clues_and_crosswords %}
         <li>
           <a href="{{ url_for('crossword', crossword_id = crossword.id|replace("/", "%2F")) }}">{{ crossword.web_title }}</a> — {{ crossword.date_published }}<br>
-          {{ clue.clue_text }}
+          {{ clue.clue_number}}{{ clue.clue_direction[0] | upper }}: {{ clue.clue_text }}
         </li>
       {% endfor %}
     </ul>
