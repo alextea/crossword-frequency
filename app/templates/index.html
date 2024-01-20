@@ -9,6 +9,12 @@
 <body>
     <h1>Clues Index</h1>
 
+    <form action="/find-word" method="post">
+      <label for="solution-input">Find a word</label>
+      <input type="text" id="solution-input" name="solution"> 
+      <button type="submit">Look up word</button>
+    </form>
+
     <p>Latest crossword: <a href="{{ url_for('crossword', crossword_id=latest_crossword.id | replace("/", "%2F"))}}">{{ latest_crossword.web_title }}</a> — {{ latest_crossword.date_published }}</p>
 
     <p>Solutions in latest crossword:</p>

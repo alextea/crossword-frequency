@@ -1,5 +1,5 @@
 # app/routes.py
-from flask import render_template, url_for
+from flask import render_template, request, redirect, url_for
 from app import app
 from app.database.models import db, Clue, Crossword
 from urllib.parse import unquote
@@ -38,3 +38,19 @@ def crossword(crossword_id):
     crossword = Crossword.query.filter_by(id=crossword_id).first_or_404()
     clues = Clue.query.filter_by(crossword_id = crossword_id).all()
     return render_template('crossword.html', crossword=crossword, clues=clues)
+
+@app.route('/find-word', methods=['POST'])
+def find_word():
+    word = request.form.get('solution')
+    word = process_string(word)
+
+    print(f"search: {word}")
+
+    return redirect(url_for('view', solution=word))
+
+
+def process_string(input_string):
+    # Use list comprehension to filter out non-alphabetic characters
+    # and then join the characters to form a new string
+    cleaned_string = ''.join(char.upper() for char in input_string if char.isalpha())
+    return cleaned_string
