@@ -1,10 +1,10 @@
 # app/__init__.py
 from flask import Flask
+from config import app_config
 from app.database.models import db
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///../crossword_database.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config.from_object(app_config)
 
 from app.database.database_operations import init_db
 

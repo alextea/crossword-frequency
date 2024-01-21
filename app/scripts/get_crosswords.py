@@ -10,7 +10,7 @@ from database.models import Crossword, Clue
 from scraper import scrape_crossword_data
 
 # Initialize the database session
-db_session = db.init_db("sqlite:///crossword_database.db")
+db_session = db.init_db(app.config['SQLALCHEMY_DATABASE_URI'])
 
 config = configparser.ConfigParser()
 config.read('config.ini')
