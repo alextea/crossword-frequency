@@ -10,7 +10,7 @@ class DevelopmentConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///production.db'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
     PORT = os.environ.get('PORT', 5000)
 
 # Determine the environment based on an environment variable
