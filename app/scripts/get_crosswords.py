@@ -1,25 +1,36 @@
 import requests
+from bs4 import BeautifulSoup
+import json
 from datetime import date, datetime
 from time import sleep
 import urllib.parse
 import configparser
+from flask.cli import AppGroup
 
-import database.database_operations as db
-from database.models import Crossword, Clue
+from app.database import database_operations as db
+from app.database.models import Crossword, Clue
 
-from scraper import scrape_crossword_data
+from config import app_config
 
 # Initialize the database session
-db_session = db.init_db(app.config['SQLALCHEMY_DATABASE_URI'])
+config_instance = app_config()
+db_session = db.init_db(config_instance.SQLALCHEMY_DATABASE_URI)
 
-config = configparser.ConfigParser()
-config.read('config.ini')
+secrets = configparser.ConfigParser()
+secrets.read('secrets.ini')
 
-API_KEY = config['api_keys']['guardian']
+API_KEY = secrets['api_keys']['guardian']
 API_URL = "https://content.guardianapis.com/crosswords/series/quick"
 
 from_date = date(2019, 1, 1)
 to_date = date.today()
+
+db_cli = AppGroup('database')
+
+@db_cli.command("populate")
+def populate():
+    crossword_data = get_crosswords(API_KEY, from_date, to_date)
+    process_crosswords(crossword_data)
 
 def get_crosswords(api_key, from_date, to_date, page=1):
     formatted_from_date = from_date.strftime("%Y-%m-%d")
@@ -38,7 +49,7 @@ def get_crosswords(api_key, from_date, to_date, page=1):
     response = requests.get(API_URL, params=params)
     if response.status_code == 200:
         crossword_data = response.json()
-        process_crosswords(crossword_data['response'])
+        return crossword_data['response']
     else:
         print(f"Failed to retrieve crossword data for {formatted_from_date} (Status Code: {response.status_code})")
 
@@ -85,5 +96,43 @@ def process_crosswords(crossword_data):
         sleep(1) # Rate limit: 1 request per second
         get_crosswords(API_KEY, from_date, to_date, page)
     
+def scrape_crossword_data(url):
+    # Send a GET request to the URL
+    response = requests.get(url)
+    clues_list = []
+    
+    # Check if the request was successful (status code 200)
+    if response.status_code == 200:
+        # Parse the HTML content of the page using BeautifulSoup
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        # Find the div with the class 'js-crossword' and get the 'data-crossword-data' attribute
+        crossword_div = soup.find('div', class_='js-crossword')
+        if crossword_div:
+            crossword_data_json = crossword_div.get('data-crossword-data')
+
+            # Load the JSON data
+            crossword_data = json.loads(crossword_data_json)
+
+            # create clue objects from json
+            for entry_data in crossword_data['entries']:
+                entry = Clue(
+                    crossword_id=crossword_data['id'],
+                    clue_number=entry_data['number'],
+                    clue_direction=entry_data['direction'],
+                    clue_text=entry_data['clue'],
+                    solution=entry_data['solution'],
+                )
+
+                print(f"Solution: {entry.solution}")
+
+                clues_list.append(entry)
+            
+            return clues_list
+        else:
+            print("Crossword div not found")
+    else:
+        print(f"Failed to retrieve page (Status Code: {response.status_code})")
+
 if __name__ == "__main__":
     get_crosswords(API_KEY, from_date, to_date)
