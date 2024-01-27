@@ -19,8 +19,8 @@ db_session = db.init_db(config_instance.SQLALCHEMY_DATABASE_URI)
 secrets = configparser.ConfigParser()
 secrets.read('secrets.ini')
 
-API_KEY = secrets['api_keys']['guardian']
-API_URL = "https://content.guardianapis.com/crosswords/series/quick"
+api_key = secrets['api_keys']['guardian']
+api_url = "https://content.guardianapis.com/crosswords/series/quick"
 
 from_date = date(2019, 1, 1)
 to_date = date.today()
@@ -29,8 +29,19 @@ db_cli = AppGroup('database')
 
 @db_cli.command("populate")
 def populate():
-    crossword_data = get_crosswords(API_KEY, from_date, to_date)
+    page = 1
+    crossword_data = get_and_process_crosswords(api_key, from_date, to_date, page)
+    
+    while crossword_data['currentPage'] < crossword_data['pages'] :
+        page = crossword_data['currentPage'] + 1
+
+        sleep(1) # Rate limit: 1 request per second
+        crossword_data = get_and_process_crosswords(api_key, from_date, to_date, page)
+
+def get_and_process_crosswords(api_key, from_date, to_date, page):
+    crossword_data = get_crosswords(api_key, from_date, to_date, page)
     process_crosswords(crossword_data)
+    return crossword_data
 
 def get_crosswords(api_key, from_date, to_date, page=1):
     formatted_from_date = from_date.strftime("%Y-%m-%d")
@@ -44,9 +55,9 @@ def get_crosswords(api_key, from_date, to_date, page=1):
         "page": page
     }
 
-    print(API_URL+"?"+urllib.parse.urlencode(params))
+    print(api_url+"?"+urllib.parse.urlencode(params))
 
-    response = requests.get(API_URL, params=params)
+    response = requests.get(api_url, params=params)
     if response.status_code == 200:
         crossword_data = response.json()
         return crossword_data['response']
@@ -89,12 +100,7 @@ def process_crosswords(crossword_data):
         db_session.commit()
         db_session.close()
 
-
-    if crossword_data['currentPage'] < crossword_data['pages'] :
-        page = crossword_data['currentPage'] + 1
-
         sleep(1) # Rate limit: 1 request per second
-        get_crosswords(API_KEY, from_date, to_date, page)
     
 def scrape_crossword_data(url):
     # Send a GET request to the URL
@@ -134,5 +140,3 @@ def scrape_crossword_data(url):
     else:
         print(f"Failed to retrieve page (Status Code: {response.status_code})")
 
-if __name__ == "__main__":
-    get_crosswords(API_KEY, from_date, to_date)
