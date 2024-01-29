@@ -9,3 +9,5 @@ app.config.from_object(app_config)
 
 db.init_app(app)  # Initialize Flask-SQLAlchemy
 app.cli.add_command(db_cli)
+
+from app import routes
