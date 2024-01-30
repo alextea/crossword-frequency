@@ -6,15 +6,10 @@ from time import sleep
 import urllib.parse
 import configparser
 from flask.cli import AppGroup
+from flask import current_app as app
 
 from app.database import database_operations as db
 from app.database.models import Crossword, Clue
-
-from config import app_config
-
-# Initialize the database session
-config_instance = app_config()
-db_session = db.init_db(config_instance.SQLALCHEMY_DATABASE_URI)
 
 secrets = configparser.ConfigParser()
 secrets.read('secrets.ini')
@@ -66,6 +61,9 @@ def get_crosswords(api_key, from_date, to_date, page=1):
 
 def process_crosswords(crossword_data):
     # iterate through crossword page urls and scrape crossword data from pages
+
+    # Initialize the database session
+    db_session = db.init_db(app.config['SQLALCHEMY_DATABASE_URI'])
 
     for result in crossword_data['results']:
         # check if crossword has already been scraped

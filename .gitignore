@@ -162,3 +162,7 @@ cython_debug/
 
 # databases
 *.db
+
+# configs
+config.py
+secrets.ini
