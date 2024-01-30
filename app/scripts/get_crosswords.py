@@ -4,18 +4,12 @@ import json
 from datetime import date, datetime
 from time import sleep
 import urllib.parse
-import configparser
 from flask.cli import AppGroup
 from flask import current_app as app
 
 from app.database import database_operations as db
 from app.database.models import Crossword, Clue
 
-secrets = configparser.ConfigParser()
-secrets.read('secrets.ini')
-
-api_key = secrets['api_keys']['guardian']
-api_url = "https://content.guardianapis.com/crosswords/series/quick"
 
 from_date = date(2019, 1, 1)
 to_date = date.today()
@@ -24,6 +18,8 @@ db_cli = AppGroup('database')
 
 @db_cli.command("populate")
 def populate():
+    api_key = app.config['GUARDIAN_API_KEY']
+
     page = 1
     crossword_data = get_and_process_crosswords(api_key, from_date, to_date, page)
     
@@ -39,6 +35,7 @@ def get_and_process_crosswords(api_key, from_date, to_date, page):
     return crossword_data
 
 def get_crosswords(api_key, from_date, to_date, page=1):
+    api_url = "https://content.guardianapis.com/crosswords/series/quick"
     formatted_from_date = from_date.strftime("%Y-%m-%d")
     formatted_to_date = to_date.strftime("%Y-%m-%d")
     params = {

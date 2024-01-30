@@ -5,3 +5,5 @@ SQLALCHEMY_TRACK_MODIFICATIONS = False
 DEBUG = True
 SQLALCHEMY_DATABASE_URI = 'sqlite:///crossword_database.db'
 PORT = 8000
+
+GUARDIAN_API_KEY = 'xxx'
