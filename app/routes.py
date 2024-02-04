@@ -9,11 +9,11 @@ def index():
     latest_crossword = Crossword.query.order_by(db.desc('date_published')).first()
     clues = Clue.query.filter_by(crossword_id = latest_crossword.id)
     most_common_clues = (
-      db.session.query(Clue.solution, db.func.count(Clue.solution).label('count'))
-      .group_by(Clue.solution)
-      .order_by(db.func.count(Clue.solution).desc())
-      .limit(10)
-      .all()
+        db.session.query(Clue, db.func.count(Clue.solution).label('count'))
+        .group_by(Clue.solution)
+        .order_by(db.func.count(Clue.solution).desc())
+        .limit(10)
+        .all()
     )
 
     total_clues = Clue.query.count()
